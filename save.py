@@ -16,7 +16,7 @@ def save_data(activities, saved=True):
     }
 
     with open(SAVE_FILE, 'w') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)  # indent делает файл более читаемым
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 
 # Функция для загрузки данных из JSON-файла
@@ -27,7 +27,7 @@ def load_data():
     # Возвращаем пустой список активностей, если файл не существует
     return {
         "saved": False,
-        "timestamp": None,
+        "timestamp": time.time(),  # Устанавливаем текущее время для нового файла
         "activities": []
     }
 
@@ -53,14 +53,14 @@ def update_activity(index, new_data):
         save_data(data["activities"])
 
 
-# Пример: добавление новой активности
+# Пример использования
 if __name__ == "__main__":
     activities = load_data()["activities"]
 
-    # Пример добавления новой активности
+    # Добавление новой активности
     add_activity("Работа", "Задачи на день")
 
-    # Пример обновления времени начала активности
+    # Установка времени начала активности
     start_time = time.time()
     start_readable = datetime.fromtimestamp(start_time).strftime("%d.%m.%Y %H:%M:%S")
 
