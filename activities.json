@@ -1,29 +1,31 @@
 {
-    "saved": true,
-    "timestamp": 1670744270.0,
     "activities": [
+        {
+            "name": "Учеба",
+            "start": null,
+            "end": null,
+            "duration": null,
+            "note": ""
+        },
+        {
+            "name": "Дз",
+            "start": null,
+            "end": null,
+            "duration": null,
+            "note": ""
+        },
         {
             "name": "Отдых",
             "start": null,
-            "start_readable": null,
-            "note": ""
-        },
-        {
-            "name": "Сон",
-            "start": null,
-            "start_readable": null,
-            "note": ""
-        },
-        {
-            "name": "Школа",
-            "start": null,
-            "start_readable": null,
+            "end": null,
+            "duration": null,
             "note": ""
         },
         {
             "name": "Другое",
             "start": null,
-            "start_readable": null,
+            "end": null,
+            "duration": null,
             "note": ""
         }
     ]
