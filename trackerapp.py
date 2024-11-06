@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPu
 from PyQt5.QtCore import Qt
 from datetime import datetime, timedelta
 
-
 class TimeTrackerApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -91,7 +90,7 @@ class TimeTrackerApp(QMainWindow):
 
             # Сохраняем данные активности, если длительность >= 10 секунд
             if duration >= timedelta(seconds=10):
-                self.save_to_json()  # Сохраняем данные после завершения активности
+                self.save_to_json(activity_name, activity_data['start'], end_time, duration, note)
             else:
                 print(f"Активность '{activity_name}' была слишком короткой для сохранения.")
         else:
@@ -105,36 +104,39 @@ class TimeTrackerApp(QMainWindow):
         else:
             print("Нет активных действий для завершения.")
 
-    def save_to_json(self):
-        # Создание структуры данных для сохранения
-        activities_to_save = []
-        for activity_name in self.activities:
-            if activity_name in self.activity_timers:
-                # Если активность активна, получаем её данные
-                activity_data = self.activity_timers[activity_name]
-                start_time = activity_data['start'].isoformat()
-                end_time = None  # Конечное время отсутствует
-                duration = None  # Продолжительность отсутствует
-                note = activity_data['note']
-            else:
-                # Если активность не активна, заполняем пустыми значениями
-                start_time = None
-                end_time = None
-                duration = None
-                note = ""
+    def save_to_json(self, activity_name, start_time, end_time, duration, note):
+        # Загрузка существующих данных
+        try:
+            with open('activities.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {"activities": []}
 
-            activities_to_save.append({
-                'name': activity_name,
-                'start': start_time,
-                'end': end_time,
-                'duration': duration,
-                'note': note
+        # Обновляем данные активности
+        updated = False
+        for activity in data["activities"]:
+            if activity["name"] == activity_name:
+                activity["start"] = start_time.isoformat()
+                activity["end"] = end_time.isoformat()
+                activity["duration"] = str(duration)
+                activity["note"] = note
+                updated = True
+                break
+
+        # Если активность не найдена в существующих данных, добавляем её
+        if not updated:
+            data["activities"].append({
+                "name": activity_name,
+                "start": start_time.isoformat(),
+                "end": end_time.isoformat(),
+                "duration": str(duration),
+                "note": note
             })
 
-        # Сохраняем данные в файл JSON
+        # Сохраняем обновленные данные обратно в JSON
         try:
             with open('activities.json', 'w', encoding='utf-8') as f:
-                json.dump({"activities": activities_to_save}, f, ensure_ascii=False, indent=4)
+                json.dump(data, f, ensure_ascii=False, indent=4)
             print("Данные сохранены в activities.json")
         except Exception as e:
             print(f"Ошибка при сохранении данных: {e}")
@@ -144,7 +146,6 @@ class TimeTrackerApp(QMainWindow):
         center_point = QDesktopWidget().availableGeometry().center()
         qt_rectangle.moveCenter(center_point)
         self.move(qt_rectangle.topLeft())
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
