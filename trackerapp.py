@@ -12,7 +12,7 @@ class TimeTrackerApp(QMainWindow):
         self.center()
         self.setStyleSheet("background-color: #283747;")
 
-        # Словарь для хранения активностей и их времени
+        # it stores activities and their times.
         self.activity_timers = {}
         self.activities = ["Учеба", "Дз", "Отдых", "Другое"]  # Список активностей
 
@@ -21,7 +21,7 @@ class TimeTrackerApp(QMainWindow):
         layout = QVBoxLayout()
         central_widget.setLayout(layout)
 
-        # Создание кнопок для каждой активности
+        # сreation of buttons for each activity
         for activity in self.activities:
             button = QPushButton(activity)
             button.setStyleSheet("""
@@ -42,7 +42,7 @@ class TimeTrackerApp(QMainWindow):
             button.setMinimumWidth(200)
             layout.addWidget(button)
 
-        # Кнопка "Завершить активность"
+        # end activity button
         self.stop_button = QPushButton("Завершить активность")
         self.stop_button.setStyleSheet("""
             QPushButton {
@@ -66,11 +66,11 @@ class TimeTrackerApp(QMainWindow):
         button = self.sender()
         activity_name = button.text()
 
-        # Запрашиваем заметку у пользователя
+        # note
         note, ok = QInputDialog.getText(self, "Введите заметку", "Заметка для активности:")
 
         if ok:
-            # Запускаем активность
+            # start activity
             start_time = datetime.now()
             self.activity_timers[activity_name] = {
                 'start': start_time,
@@ -79,7 +79,7 @@ class TimeTrackerApp(QMainWindow):
             print(f"Начата активность: {activity_name} в {start_time.strftime('%H:%M:%S')} с заметкой: {note}")
 
     def stop_activity(self, activity_name):
-        # Получаем время окончания активности
+        # get activity end time
         end_time = datetime.now()
         activity_data = self.activity_timers.pop(activity_name, None)
 
@@ -88,7 +88,7 @@ class TimeTrackerApp(QMainWindow):
             note = activity_data['note']
             print(f"Активность '{activity_name}' завершена. Длительность: {duration}. Заметка: {note}")
 
-            # Сохраняем данные активности, если длительность >= 10 секунд
+            # save activity data if duration >= 10 seconds
             if duration >= timedelta(seconds=10):
                 self.save_to_json(activity_name, activity_data['start'], end_time, duration, note)
             else:
@@ -97,7 +97,7 @@ class TimeTrackerApp(QMainWindow):
             print(f"Активность '{activity_name}' не найдена.")
 
     def stop_last_activity(self):
-        # Завершает последнюю активную активность
+        # ends last active activity
         if self.activity_timers:
             last_activity = next(iter(self.activity_timers))  # Получаем имя первой активной активности
             self.stop_activity(last_activity)
@@ -105,14 +105,14 @@ class TimeTrackerApp(QMainWindow):
             print("Нет активных действий для завершения.")
 
     def save_to_json(self, activity_name, start_time, end_time, duration, note):
-        # Загрузка существующих данных
+        # Uploading data
         try:
             with open('activities.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             data = {"activities": []}
 
-        # Обновляем данные активности
+        # updating activity data
         updated = False
         for activity in data["activities"]:
             if activity["name"] == activity_name:
@@ -123,7 +123,7 @@ class TimeTrackerApp(QMainWindow):
                 updated = True
                 break
 
-        # Если активность не найдена в существующих данных, добавляем её
+        # if activity isn't found in the existing data, add it
         if not updated:
             data["activities"].append({
                 "name": activity_name,
@@ -133,7 +133,7 @@ class TimeTrackerApp(QMainWindow):
                 "note": note
             })
 
-        # Сохраняем обновленные данные обратно в JSON
+        # save updated data back to JSON
         try:
             with open('activities.json', 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
