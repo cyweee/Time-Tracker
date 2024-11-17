@@ -1,72 +1,93 @@
 import json
 import matplotlib.pyplot as plt
-import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# func for loading data from JSON
-def load_data(filename):
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("activities", [])
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Ошибка загрузки данных: {e}")
-        return []
+# Translation dictionary for the chart
+translations = {
+    "ru": {
+        "title": "Распределение времени по категориям",
+        "x_label": "День недели",
+        "y_label": "Часы",
+        "categories": ["Учеба", "Дз", "Отдых", "Другое"],
+        "days": ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]
+    },
+    "en": {
+        "title": "Time Distribution by Categories",
+        "x_label": "Day of the Week",
+        "y_label": "Hours",
+        "categories": ["Study", "Homework", "Relax", "Other"],
+        "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    }
+}
 
-# func for calculating activity duration in hours
-def calculate_durations(activities):
-    durations_by_day = {"ПН": {}, "ВТ": {}, "СР": {}, "ЧТ": {}, "ПТ": {}, "СБ": {}, "ВС": {}}
+def read_and_process_json(file_path):
+    """Считывание JSON и обработка данных."""
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
 
-    for entry in activities:
-        name = entry["name"]
-        start_str = entry["start"]
-        end_str = entry["end"]
+    # Creating a dictionary to store time by weekdays and categories
+    categories = ["Учеба", "Дз", "Отдых", "Другое"]
+    time_data = {cat: [0] * 7 for cat in categories}  # 7 дней недели
 
-        if start_str and end_str:
-            # convert strings to datetime objects
-            start = datetime.fromisoformat(start_str)
-            end = datetime.fromisoformat(end_str)
-            duration_hours = (end - start).total_seconds() / 3600
+    for activity in data["activities"]:
+        name = activity["name"]
+        start = activity.get("start")
+        end = activity.get("end")
 
-            # define day of week
-            day_of_week = start.strftime("%a").upper()
-            if day_of_week in durations_by_day:
-                if name not in durations_by_day[day_of_week]:
-                    durations_by_day[day_of_week][name] = 0
-                durations_by_day[day_of_week][name] += duration_hours
+        if name in categories and start and end:
+            # Duration calculation
+            start_time = datetime.fromisoformat(start)
+            end_time = datetime.fromisoformat(end)
+            duration = end_time - start_time
 
-    return durations_by_day
+            # Convert duration to hours
+            duration_hours = duration.total_seconds() / 3600
 
-# loading data and calculating durations
-data = load_data('activities.json')
-durations_by_day = calculate_durations(data)
+            # Definition of the day of the week (0 = Mon, 6 = Sun)
+            day_of_week = start_time.weekday()
 
-# parameters for drawing a graph
-days = list(durations_by_day.keys())
-activities = ["Учеба", "Дз", "Отдых", "Другое"]
-colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#8c564b']  # Цвета для категорий
+            # Adding time to the appropriate category and day
+            time_data[name][day_of_week] += duration_hours
 
-# convert data into arrays
-values = []
-for day in days:
-    values.append([durations_by_day[day].get(activity, 0) for activity in activities])
+    return time_data
 
-values = np.array(values)
+def plot_statistics(time_data, language="ru"):
+    """Построение графика на основе данных и языка."""
+    lang_data = translations[language]
+    title = lang_data["title"]
+    x_label = lang_data["x_label"]
+    y_label = lang_data["y_label"]
+    categories = lang_data["categories"]
+    days = lang_data["days"]
 
-# building a chart
-fig, ax = plt.subplots(figsize=(10, 6))
+    # Plotting a graph
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bar_width = 0.2  # Ширина столбцов
+    x_indexes = range(len(days))
 
-# sum the values for each category to create stacks
-bottom = np.zeros(len(days))
-for i, activity in enumerate(activities):
-    ax.bar(days, values[:, i], label=activity, color=colors[i], bottom=bottom)
-    bottom += values[:, i]
+    # Drawing columns for each category
+    for i, category in enumerate(categories):
+        ax.bar(
+            [x + i * bar_width for x in x_indexes],  # Смещение столбцов
+            time_data.get(category, [0] * 7),
+            width=bar_width,
+            label=category
+        )
 
-# chart settings
-ax.set_xlabel('День недели')
-ax.set_ylabel('Часы')
-ax.set_title('Распределение времени по категориям')
-ax.legend(activities, bbox_to_anchor=(1.05, 1), loc='upper left')
+    # Customizing the chart
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_xticks([x + bar_width * (len(categories) / 2 - 0.5) for x in x_indexes])
+    ax.set_xticklabels(days)
+    ax.legend()
 
-plt.tight_layout()
-plt.show()
+    plt.show()
+
+if __name__ == "__main__":
+    # Example of usage
+    file_path = "activities.json"
+    current_language = "ru"  # Current interface language (“ru” or “en”)
+
+    time_data = read_and_process_json(file_path)
+    plot_statistics(time_data, language=current_language)
