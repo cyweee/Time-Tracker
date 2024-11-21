@@ -8,45 +8,54 @@ translations = {
         "title": "Распределение времени по категориям",
         "x_label": "День недели",
         "y_label": "Часы",
-        "categories": ["Учеба", "Дз", "Отдых", "Другое"],
+        "categories": {
+            "study": "Учеба",
+            "homework": "Дз",
+            "relax": "Отдых",
+            "other": "Другое"
+        },
         "days": ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]
     },
     "en": {
         "title": "Time Distribution by Categories",
         "x_label": "Day of the Week",
         "y_label": "Hours",
-        "categories": ["Study", "Homework", "Relax", "Other"],
+        "categories": {
+            "study": "Study",
+            "homework": "Homework",
+            "relax": "Relax",
+            "other": "Other"
+        },
         "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     }
 }
 
-def read_and_process_json(file_path):
+def read_and_process_json(file_path, category_keys):
     """Считывание JSON и обработка данных."""
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Creating a dictionary to store time by weekdays and categories
-    categories = ["Учеба", "Дз", "Отдых", "Другое"]
-    time_data = {cat: [0] * 7 for cat in categories}  # 7 дней недели
+    # create a dictionary to store time by day of the week and category
+    time_data = {key: [0] * 7 for key in category_keys}  # 7 дней недели
 
     for activity in data["activities"]:
         name = activity["name"]
         start = activity.get("start")
         end = activity.get("end")
 
-        if name in categories and start and end:
-            # Duration calculation
+        if name in category_keys and start and end:
+            # duration calculation
             start_time = datetime.fromisoformat(start)
             end_time = datetime.fromisoformat(end)
             duration = end_time - start_time
 
-            # Convert duration to hours
+            # convert duration to hours
             duration_hours = duration.total_seconds() / 3600
 
-            # Definition of the day of the week (0 = Mon, 6 = Sun)
+            # define day of week (0 = Monday, 6 = Sunday)
             day_of_week = start_time.weekday()
 
-            # Adding time to the appropriate category and day
+            # add time to the appropriate category and day
             time_data[name][day_of_week] += duration_hours
 
     return time_data
@@ -60,34 +69,45 @@ def plot_statistics(time_data, language="ru"):
     categories = lang_data["categories"]
     days = lang_data["days"]
 
-    # Plotting a graph
+    # preparing data for plotting
+    category_keys = list(categories.keys())
+    translated_categories = [categories[key] for key in category_keys]
+
+    # plotting
     fig, ax = plt.subplots(figsize=(10, 6))
     bar_width = 0.2  # Ширина столбцов
     x_indexes = range(len(days))
 
-    # Drawing columns for each category
-    for i, category in enumerate(categories):
+    # Построение столбцов для каждой категории
+    for i, category in enumerate(category_keys):
         ax.bar(
-            [x + i * bar_width for x in x_indexes],  # Смещение столбцов
+            [x + i * bar_width for x in x_indexes],
             time_data.get(category, [0] * 7),
             width=bar_width,
-            label=category
+            label=translated_categories[i]
         )
 
-    # Customizing the chart
+    # Настройка графика
     ax.set_title(title)
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
-    ax.set_xticks([x + bar_width * (len(categories) / 2 - 0.5) for x in x_indexes])
+    ax.set_xticks([x + bar_width * (len(category_keys) / 2 - 0.5) for x in x_indexes])
     ax.set_xticklabels(days)
     ax.legend()
 
     plt.show()
 
 if __name__ == "__main__":
-    # Example of usage
+    # path to json
     file_path = "activities.json"
-    current_language = "ru"  # Current interface language (“ru” or “en”)
 
-    time_data = read_and_process_json(file_path)
+    # current language
+    current_language = "ru"
+
+    # category keys
+    category_keys = ["study", "homework", "relax", "other"]
+
+    # Чтение и обработка данных
+    time_data = read_and_process_json(file_path, category_keys)
+
     plot_statistics(time_data, language=current_language)
