@@ -62,11 +62,31 @@ class TimeTrackerApp(QMainWindow):
         self.buttons = {}
         self.create_activity_buttons()
 
+        # Create the stop button
         self.stop_button = QPushButton(self.tr("Stop Activity"))
-        self.style_button(self.stop_button, "#A93226", "#CB4335")
+        self.stop_button.setStyleSheet("""
+            QPushButton {
+                background-color: #A93226;
+                color: #FFFFFF;
+                font-size: 18px;
+                border: none;
+                border-radius: 10px;
+                padding: 10px;
+                margin: 5px;
+            }
+            QPushButton:disabled {
+                background-color: #450303;
+                color: #474545;
+            }
+            QPushButton:hover:!disabled {
+                background-color: #CB4335;
+            }
+        """)
         self.stop_button.clicked.connect(self.stop_last_activity)
+        self.stop_button.setEnabled(False)  # Initially disabled
         self.layout.addWidget(self.stop_button)
 
+        # Create the language switch button
         self.language_button = QPushButton("Switch Language")
         self.language_button.setStyleSheet("""
             QPushButton {
@@ -82,7 +102,6 @@ class TimeTrackerApp(QMainWindow):
         """)
         self.language_button.setFixedHeight(40)
         self.language_button.setMinimumWidth(150)
-
         self.language_button.clicked.connect(self.switch_language)
         self.layout.addWidget(self.language_button)
 
@@ -108,7 +127,7 @@ class TimeTrackerApp(QMainWindow):
             QPushButton {{
                 background-color: {color};
                 color: #A9A9A9;
-                font-size: 16px;
+                font-size: 18px;
                 border: none;
                 border-radius: 10px;
                 padding: 10px;
@@ -140,6 +159,10 @@ class TimeTrackerApp(QMainWindow):
             }
             print(f"{self.tr('Started activity:')} {self.tr(activity_key)} {start_time.strftime('%H:%M:%S')} {self.tr('with note:')} {note}")
 
+            # Enable the stop button
+            self.stop_button.setEnabled(True)
+
+
     def stop_activity(self, activity_key):
         end_time = datetime.now()
         activity_data = self.activity_timers.pop(activity_key, None)
@@ -155,6 +178,10 @@ class TimeTrackerApp(QMainWindow):
                 print(f"{self.tr(activity_key)} {self.tr('was too short to save.')}")
         else:
             print(self.tr("No active activities to stop."))
+
+        # Disable the stop button if there are no active activities
+        if not self.activity_timers:
+            self.stop_button.setEnabled(False)
 
     def stop_last_activity(self):
         if self.activity_timers:
