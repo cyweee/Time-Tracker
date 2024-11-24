@@ -150,6 +150,11 @@ class TimeTrackerApp(QMainWindow):
         self.stop_button.setText(self.tr("Stop Activity"))
 
     def start_activity(self, activity_key):
+        # check if there is already an active task
+        if self.activity_timers:
+            print(self.tr("There is already an active activity. Please stop it before starting a new one."))
+            return
+
         note, ok = QInputDialog.getText(self, self.tr("Enter Note"), self.tr("Note for Activity:"))
         if ok:
             start_time = datetime.now()
@@ -157,12 +162,13 @@ class TimeTrackerApp(QMainWindow):
                 'start': start_time,
                 'note': note
             }
-            print(f"{self.tr('Started activity:')} {self.tr(activity_key)} {start_time.strftime('%H:%M:%S')} {self.tr('with note:')} {note}")
+            print(
+                f"{self.tr('Started activity:')} {self.tr(activity_key)} {start_time.strftime('%H:%M:%S')} {self.tr('with note:')} {note}")
 
-            # Enable the stop button
+            # enable the button to end the activity
             self.stop_button.setEnabled(True)
 
-
+    # Enable the stop button
     def stop_activity(self, activity_key):
         end_time = datetime.now()
         activity_data = self.activity_timers.pop(activity_key, None)
