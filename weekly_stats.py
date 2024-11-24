@@ -60,7 +60,7 @@ def read_and_process_json(file_path, category_keys):
 
     return time_data
 
-def plot_statistics(time_data, language="ru"):
+def plot_statistics(time_data, language="ru", output_file=None):
     """Построение графика на основе данных и языка."""
     lang_data = translations[language]
     title = lang_data["title"]
@@ -95,7 +95,12 @@ def plot_statistics(time_data, language="ru"):
     ax.set_xticklabels(days)
     ax.legend()
 
-    plt.show()
+    # storing the graph if a file for output is specified
+    if output_file:
+        fig.savefig(output_file, dpi=300, bbox_inches='tight', transparent=True)
+        print(f"Graph saved to {output_file}")
+    else:
+        plt.show()
 
 if __name__ == "__main__":
     # path to json
@@ -107,7 +112,11 @@ if __name__ == "__main__":
     # category keys
     category_keys = ["study", "homework", "relax", "other"]
 
+    # output file (None если не нужно сохранять)
+    output_file = "statistics.png"  # можно использовать .jpg, .pdf или другой формат
+
     # Чтение и обработка данных
     time_data = read_and_process_json(file_path, category_keys)
 
-    plot_statistics(time_data, language=current_language)
+    # Построение и экспорт графика
+    plot_statistics(time_data, language=current_language, output_file=output_file)
