@@ -1,6 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import os
 
 # Translation dictionary for the chart
 translations = {
@@ -32,6 +33,12 @@ translations = {
 
 def read_and_process_json(file_path, category_keys):
     """Считывание JSON и обработка данных."""
+    if not os.path.exists(file_path):
+        # Если файла нет, создаем пустую структуру
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump({"activities": []}, f, ensure_ascii=False, indent=4)
+        print(f"Created new file: {file_path}")
+
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -102,6 +109,15 @@ def plot_statistics(time_data, language="ru", output_file=None):
     else:
         plt.show()
 
+def clear_old_data(file_path):
+    """Очищает данные для новой недели."""
+    if os.path.exists(file_path):
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump({"activities": []}, f, ensure_ascii=False, indent=4)
+        print(f"Cleared data in {file_path}")
+    else:
+        print(f"File {file_path} does not exist. No data to clear.")
+
 if __name__ == "__main__":
     # path to json
     file_path = "activities.json"
@@ -113,10 +129,19 @@ if __name__ == "__main__":
     category_keys = ["study", "homework", "relax", "other"]
 
     # output file (None если не нужно сохранять)
-    output_file = "statistics.png"  # можно использовать .jpg, .pdf или другой формат
+    output_file = "doc/img/your_stats.png"
+
+    # Получение текущего дня недели
+    current_day = datetime.now().weekday()  # 0 = ПН, 6 = ВС
 
     # Чтение и обработка данных
     time_data = read_and_process_json(file_path, category_keys)
 
-    # Построение и экспорт графика
+    # Построение графика на основе текущей недели
     plot_statistics(time_data, language=current_language, output_file=output_file)
+
+    # Если сегодня воскресенье, очищаем данные
+    if current_day == 6:  # 6 = Sunday
+        clear_old_data(file_path)
+    else:
+        print("Данные за текущую неделю визуализированы. Очистка произойдёт в ближайшее воскресенье.")
