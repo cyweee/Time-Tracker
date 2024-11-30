@@ -58,7 +58,7 @@ def process_monthly_data(activities, category_keys):
                 print(f"Ошибка формата времени в активности: {activity}")
     return time_data
 
-def plot_monthly_statistics(time_data, language="ru"):
+def plot_monthly_statistics(time_data, language="ru", output_file=None):
     """Построение графика за месяц."""
     lang_data = translations[language]
     title = lang_data["title"]
@@ -104,7 +104,13 @@ def plot_monthly_statistics(time_data, language="ru"):
     ax[1].grid(axis='y')
 
     plt.tight_layout()
-    plt.show()
+
+    # Сохранение графика в файл, если указан output_file
+    if output_file:
+        fig.savefig(output_file, dpi=300, bbox_inches='tight', transparent=True)
+        print(f"Graph saved to {output_file}")
+    else:
+        plt.show()
 
 if __name__ == "__main__":
     activities = read_activities("activities.json")
@@ -127,5 +133,8 @@ if __name__ == "__main__":
     # Обработка данных
     time_data = process_monthly_data(monthly_activities, category_keys)
 
-    # Построение графика
-    plot_monthly_statistics(time_data, language="ru")
+    # Путь для сохранения графика
+    output_file = "doc/img/your_monthly_stats.jpg"
+
+    # Построение графика и сохранение его в файл
+    plot_monthly_statistics(time_data, language="ru", output_file=output_file)

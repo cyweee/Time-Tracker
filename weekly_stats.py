@@ -129,7 +129,7 @@ if __name__ == "__main__":
     category_keys = ["study", "homework", "relax", "other"]
 
     # output file (None если не нужно сохранять)
-    output_file = "doc/img/your_stats.png"
+    output_file = "doc/img/your_stats.jpg"
 
     # Получение текущего дня недели
     current_day = datetime.now().weekday()  # 0 = ПН, 6 = ВС
