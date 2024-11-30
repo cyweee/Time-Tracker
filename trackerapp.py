@@ -32,7 +32,9 @@ class TimeTrackerApp(QMainWindow):
                 "Started activity:": "Начата активность:",
                 "Activity completed. Duration:": "Активность завершена. Длительность:",
                 "Note:": "Заметка:",
-                "was too short to save.": "была слишком короткой для сохранения."
+                "was too short to save.": "была слишком короткой для сохранения.",
+                "Show Weekly Data": "Показать данные за неделю",
+                "Show Monthly Data": "Показать данные за месяц",
             },
             "en": {
                 "study": "Study",
@@ -48,7 +50,9 @@ class TimeTrackerApp(QMainWindow):
                 "Started activity:": "Started activity:",
                 "Activity completed. Duration:": "Activity completed. Duration:",
                 "Note:": "Note:",
-                "was too short to save.": "was too short to save."
+                "was too short to save.": "was too short to save.",
+                "Show Weekly Data": "Show Weekly Data",
+                "Show Monthly Data": "Show Monthly Data",
             }
         }
         self.current_language = "ru"
@@ -105,6 +109,17 @@ class TimeTrackerApp(QMainWindow):
         self.language_button.clicked.connect(self.switch_language)
         self.layout.addWidget(self.language_button)
 
+        # Create the week and month buttons
+        self.week_button = QPushButton(self.tr("Show Weekly Data"))
+        self.style_button(self.week_button, "#4B4B4B", "#5B5B5B")
+        self.week_button.clicked.connect(self.show_week_data)
+        self.layout.addWidget(self.week_button)
+
+        self.month_button = QPushButton(self.tr("Show Monthly Data"))
+        self.style_button(self.month_button, "#4B4B4B", "#5B5B5B")
+        self.month_button.clicked.connect(self.show_month_data)
+        self.layout.addWidget(self.month_button)
+
     def tr(self, text):
         """Перевод текста на текущий язык."""
         return self.languages[self.current_language].get(text, text)
@@ -148,9 +163,10 @@ class TimeTrackerApp(QMainWindow):
         for key, button in self.buttons.items():
             button.setText(localized_labels[self.activity_keys.index(key)])
         self.stop_button.setText(self.tr("Stop Activity"))
+        self.week_button.setText(self.tr("Show Weekly Data"))
+        self.month_button.setText(self.tr("Show Monthly Data"))
 
     def start_activity(self, activity_key):
-        # check if there is already an active task
         if self.activity_timers:
             print(self.tr("There is already an active activity. Please stop it before starting a new one."))
             return
@@ -162,13 +178,9 @@ class TimeTrackerApp(QMainWindow):
                 'start': start_time,
                 'note': note
             }
-            print(
-                f"{self.tr('Started activity:')} {self.tr(activity_key)} {start_time.strftime('%H:%M:%S')} {self.tr('with note:')} {note}")
-
-            # enable the button to end the activity
+            print(f"{self.tr('Started activity:')} {self.tr(activity_key)} {start_time.strftime('%H:%M:%S')} {self.tr('with note:')} {note}")
             self.stop_button.setEnabled(True)
 
-    # Enable the stop button
     def stop_activity(self, activity_key):
         end_time = datetime.now()
         activity_data = self.activity_timers.pop(activity_key, None)
@@ -185,7 +197,6 @@ class TimeTrackerApp(QMainWindow):
         else:
             print(self.tr("No active activities to stop."))
 
-        # Disable the stop button if there are no active activities
         if not self.activity_timers:
             self.stop_button.setEnabled(False)
 
@@ -217,6 +228,45 @@ class TimeTrackerApp(QMainWindow):
             print(self.tr("Data saved to activities.json"))
         except Exception as e:
             print(f"{self.tr('Error saving data:')} {e}")
+
+    def filter_activities_by_period(self, file_path, start_date, end_date):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            data = {"activities": []}
+
+        activities = data.get("activities", [])
+        filtered = []
+        for activity in activities:
+            # Проверьте, что поле "start" является строкой перед его конвертацией
+            if isinstance(activity["start"], str):
+                activity_start_date = datetime.fromisoformat(activity["start"]).date()
+                if start_date <= activity_start_date <= end_date:
+                    filtered.append(activity)
+        return filtered
+    def get_current_week_data(self):
+        today = datetime.today()
+        start_of_week = today - timedelta(days=today.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        return self.filter_activities_by_period('activities.json', start_of_week.date(), end_of_week.date())
+
+    def get_current_month_data(self):
+        today = datetime.today()
+        start_of_month = today.replace(day=1)
+        next_month = start_of_month + timedelta(days=31)
+        end_of_month = next_month.replace(day=1) - timedelta(days=1)
+        return self.filter_activities_by_period('activities.json', start_of_month.date(), end_of_month.date())
+
+    def show_week_data(self):
+        week_data = self.get_current_week_data()
+        print("Weekly Data:")
+        print(json.dumps(week_data, ensure_ascii=False, indent=4))
+
+    def show_month_data(self):
+        month_data = self.get_current_month_data()
+        print("Monthly Data:")
+        print(json.dumps(month_data, ensure_ascii=False, indent=4))
 
     def center(self):
         qt_rectangle = self.frameGeometry()
