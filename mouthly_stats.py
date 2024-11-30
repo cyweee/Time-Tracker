@@ -44,14 +44,18 @@ def process_monthly_data(activities, category_keys):
         start = activity.get("start")
         end = activity.get("end")
 
+        # Проверка, что start и end - строки
         if name in category_keys and start and end:
-            start_time = datetime.fromisoformat(start)
-            end_time = datetime.fromisoformat(end)
-            duration_hours = (end_time - start_time).total_seconds() / 3600
+            try:
+                start_time = datetime.fromisoformat(start)
+                end_time = datetime.fromisoformat(end)
+                duration_hours = (end_time - start_time).total_seconds() / 3600
 
-            day_of_month = start_time.day - 1
-            time_data[name][day_of_month] += duration_hours
-
+                day_of_month = start_time.day - 1
+                time_data[name][day_of_month] += duration_hours
+            except ValueError:
+                # Логирование ошибки для некорректных данных
+                print(f"Ошибка формата времени в активности: {activity}")
     return time_data
 
 def plot_monthly_statistics(time_data, language="ru"):
@@ -110,9 +114,14 @@ if __name__ == "__main__":
     today = datetime.today()
     start_of_month = today.replace(day=1)
     end_of_month = (start_of_month + timedelta(days=31)).replace(day=1) - timedelta(days=1)
+
+    # Фильтрация активностей по дате
     monthly_activities = [
         activity for activity in activities
-        if start_of_month <= datetime.fromisoformat(activity["start"]) <= end_of_month
+        if activity.get("start") and activity.get("end")  # Проверка, что start и end существуют
+        and isinstance(activity["start"], str)  # Проверка, что start - строка
+        and isinstance(activity["end"], str)  # Проверка, что end - строка
+        and start_of_month <= datetime.fromisoformat(activity["start"]) <= end_of_month
     ]
 
     # Обработка данных
