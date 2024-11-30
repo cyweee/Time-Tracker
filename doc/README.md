@@ -21,7 +21,7 @@
 
 Основным скриптом считается файл `trackerapp.py`
 
-![tracker_ru](img/main-page-app-ru.png)
+![tracker_ru](img/new_main_menu_ru.png)
 
 1.**Выберите активность которой вы хотели бы заняться и добавьте к ней заметку**
 
